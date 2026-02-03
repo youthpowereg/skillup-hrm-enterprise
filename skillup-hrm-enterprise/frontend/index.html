@@ -1,34 +1,1006 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="scroll-smooth">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>SkillUp HRM Enterprise</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillUp | HRM System v1.0.0</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- HTML2PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#f0f7ff', 100: '#e0effe', 200: '#bae0fd', 300: '#7cc2fb', 400: '#38a5f8', 500: '#0c87eb', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#172554' },
+                        accent: { gold: '#f59e0b', emerald: '#10b981', rose: '#f43f5e' }
+                    },
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] },
+                    borderRadius: { '4xl': '2.5rem' }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Global Styles */
+        body { font-family: 'Cairo', sans-serif; transition: background-color 0.3s ease; }
+        
+        /* Glass Effect */
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.3); }
+        .dark .glass { background: rgba(15, 23, 42, 0.95); border-color: rgba(255,255,255,0.05); }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+        .animate-slideIn { animation: slideIn 0.4s ease-out; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+
+        /* Loading Spinner */
+        .spinner { border: 3px solid rgba(255,255,255,0.2); border-top: 3px solid #2563eb; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Modal Backdrop */
+        .modal-backdrop { backdrop-filter: blur(8px); background: rgba(0, 0, 0, 0.5); }
+
+        /* Status Badges */
+        .status-approved { @apply bg-accent-emerald/10 text-accent-emerald border border-accent-emerald/20; }
+        .status-pending { @apply bg-accent-gold/10 text-accent-gold border border-accent-gold/20; }
+        .status-rejected { @apply bg-accent-rose/10 text-accent-rose border border-accent-rose/20; }
+
+        /* Hover Effects */
+        .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .mobile-hide { display: none; }
+            .mobile-full { width: 100% !important; }
+        }
+    </style>
 </head>
 
-<body class="bg-slate-100 font-sans">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-300">
 
-<div class="max-w-xl mx-auto mt-20 bg-white p-6 rounded-xl shadow">
-  <h1 class="text-2xl font-bold mb-4 text-center">SkillUp HRM</h1>
+    <!-- Background Pattern -->
+    <div class="fixed inset-0 -z-10 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-brand-100 dark:from-slate-900 dark:via-slate-800 dark:to-brand-900"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 bg-brand-200/30 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-accent-emerald/20 rounded-full blur-3xl"></div>
+    </div>
 
-  <!-- LOGIN -->
-  <div id="loginBox">
-    <input id="user" placeholder="Username" class="border p-2 w-full mb-2">
-    <input id="pass" type="password" placeholder="Password" class="border p-2 w-full mb-4">
-    <button onclick="login()" class="bg-blue-600 text-white w-full py-2 rounded">Login</button>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 left-4 z-50 space-y-2"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 z-40 hidden items-center justify-center modal-backdrop">
+        <div class="glass rounded-2xl p-6 flex items-center space-x-4 space-x-reverse">
+            <div class="spinner"></div>
+            <span class="text-lg font-semibold">جاري التحميل...</span>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="container mx-auto px-4 py-6 max-w-7xl">
+
+        <!-- Header -->
+        <header class="glass rounded-4xl p-6 mb-8 shadow-lg animate-fadeIn">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-4 space-x-reverse">
+                    <div class="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-users-cog text-2xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-brand-600 to-brand-800 bg-clip-text text-transparent">
+                            SkillUp HRM System
+                        </h1>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm lg:text-base">
+                            نظام إدارة الموارد البشرية المتقدم
+                        </p>
+                    </div>
+                </div>
+
+                <!-- User Info & Actions -->
+                <div id="userSection" class="hidden flex items-center space-x-4 space-x-reverse">
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <div class="w-10 h-10 bg-brand-100 dark:bg-brand-900 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-brand-600 dark:text-brand-400"></i>
+                        </div>
+                        <div>
+                            <p id="currentUser" class="font-semibold"></p>
+                            <p id="currentRole" class="text-xs text-slate-500 dark:text-slate-400"></p>
+                        </div>
+                    </div>
+                    <button onclick="logout()" class="px-4 py-2 bg-accent-rose text-white rounded-xl hover:bg-accent-rose/90 transition-colors flex items-center space-x-2 space-x-reverse">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="mobile-hide">خروج</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Login Form -->
+        <div id="loginForm" class="max-w-md mx-auto glass rounded-4xl p-8 shadow-xl animate-fadeIn">
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold mb-2">تسجيل الدخول</h2>
+                <p class="text-slate-600 dark:text-slate-400">أدخل بياناتك للوصول للنظام</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">اسم المستخدم</label>
+                    <div class="relative">
+                        <i class="fas fa-user absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="username" required 
+                               class="w-full pr-12 pl-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                               placeholder="أدخل اسم المستخدم">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2">كلمة المرور</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                        <input type="password" id="password" required 
+                               class="w-full pr-12 pl-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                               placeholder="أدخل كلمة المرور">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-xl font-semibold hover:from-brand-700 hover:to-brand-800 transition-all transform hover:scale-[1.02] flex items-center justify-center space-x-2 space-x-reverse">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>دخول</span>
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <button onclick="toggleTheme()" class="text-sm text-slate-500 dark:text-slate-400 hover:text-brand-600 transition-colors">
+                    <i class="fas fa-moon mr-2"></i>
+                    تبديل الوضع
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="hidden space-y-8">
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fadeIn">
+                <div class="glass rounded-3xl p-6 hover-lift">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm">إجمالي الأعضاء</p>
+                            <p id="totalMembers" class="text-3xl font-bold text-brand-600">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-brand-100 dark:bg-brand-900 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-users text-brand-600 dark:text-brand-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-3xl p-6 hover-lift">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm">الأعضاء النشطين</p>
+                            <p id="activeMembers" class="text-3xl font-bold text-accent-emerald">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent-emerald/10 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-user-check text-accent-emerald"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-3xl p-6 hover-lift">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm">طلبات معلقة</p>
+                            <p id="pendingReviews" class="text-3xl font-bold text-accent-gold">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent-gold/10 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-clock text-accent-gold"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-3xl p-6 hover-lift">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm">التقارير</p>
+                            <p id="totalReports" class="text-3xl font-bold text-accent-rose">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent-rose/10 rounded-2xl flex items-center justify-center">
+                            <i class="fas fa-file-alt text-accent-rose"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search & Member Details -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- Search Panel -->
+                <div class="glass rounded-4xl p-6 shadow-lg animate-slideIn">
+                    <h3 class="text-xl font-bold mb-6 flex items-center space-x-2 space-x-reverse">
+                        <i class="fas fa-search text-brand-600"></i>
+                        <span>البحث عن عضو</span>
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">رقم العضوية</label>
+                            <input type="text" id="memberSearch" 
+                                   class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
+                                   placeholder="أدخل رقم العضوية">
+                        </div>
+
+                        <button onclick="searchMember()" class="w-full py-3 bg-brand-600 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors flex items-center justify-center space-x-2 space-x-reverse">
+                            <i class="fas fa-search"></i>
+                            <span>بحث</span>
+                        </button>
+
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+                            <button onclick="showAddMemberModal()" class="w-full py-3 bg-accent-emerald text-white rounded-xl font-semibold hover:bg-accent-emerald/90 transition-colors flex items-center justify-center space-x-2 space-x-reverse">
+                                <i class="fas fa-user-plus"></i>
+                                <span>إضافة عضو جديد</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Member Details Panel -->
+                <div class="lg:col-span-2 glass rounded-4xl p-6 shadow-lg animate-slideIn">
+                    <div id="memberDetails" class="hidden">
+                        <!-- Member Header -->
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
+                            <div class="flex items-center space-x-4 space-x-reverse">
+                                <div class="w-20 h-20 bg-brand-100 dark:bg-brand-900 rounded-3xl flex items-center justify-center overflow-hidden">
+                                    <img id="memberPhoto" src="" alt="Member Photo" class="w-full h-full object-cover hidden">
+                                    <i id="memberPhotoIcon" class="fas fa-user text-3xl text-brand-600 dark:text-brand-400"></i>
+                                </div>
+                                <div>
+                                    <h2 id="memberFullName" class="text-2xl font-bold mb-1"></h2>
+                                    <p id="memberSector" class="text-slate-600 dark:text-slate-400 mb-2"></p>
+                                    <div class="flex items-center space-x-2 space-x-reverse">
+                                        <span id="memberStatus" class="px-3 py-1 rounded-full text-xs font-semibold"></span>
+                                        <span id="memberJoinDate" class="text-xs text-slate-500 dark:text-slate-400"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex flex-wrap gap-3">
+                                <button onclick="showEvaluationModal()" class="px-4 py-2 bg-brand-600 text-white rounded-xl hover:bg-brand-700 transition-colors flex items-center space-x-2 space-x-reverse">
+                                    <i class="fas fa-star"></i>
+                                    <span>تقييم شهري</span>
+                                </button>
+                                <button onclick="showActivityModal()" class="px-4 py-2 bg-accent-emerald text-white rounded-xl hover:bg-accent-emerald/90 transition-colors flex items-center space-x-2 space-x-reverse">
+                                    <i class="fas fa-trophy"></i>
+                                    <span>نشاط/مكافأة</span>
+                                </button>
+                                <button onclick="generateReport()" class="px-4 py-2 bg-accent-gold text-white rounded-xl hover:bg-accent-gold/90 transition-colors flex items-center space-x-2 space-x-reverse">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span>تقرير</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tabs -->
+                        <div class="border-b border-slate-200 dark:border-slate-700 mb-6">
+                            <nav class="flex space-x-8 space-x-reverse">
+                                <button onclick="switchTab('logs')" id="logsTab" class="tab-btn py-3 px-1 border-b-2 border-brand-600 text-brand-600 font-semibold">
+                                    السجل
+                                </button>
+                                <button onclick="switchTab('evaluations')" id="evaluationsTab" class="tab-btn py-3 px-1 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold">
+                                    التقييمات
+                                </button>
+                                <button onclick="switchTab('activities')" id="activitiesTab" class="tab-btn py-3 px-1 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-semibold">
+                                    الأنشطة
+                                </button>
+                            </nav>
+                        </div>
+
+                        <!-- Tab Contents -->
+                        <div id="tabContent">
+                            <!-- Logs Tab -->
+                            <div id="logsContent" class="tab-content">
+                                <div id="memberLogsList" class="space-y-4"></div>
+                            </div>
+
+                            <!-- Evaluations Tab -->
+                            <div id="evaluationsContent" class="tab-content hidden">
+                                <div id="memberEvaluationsList" class="space-y-4"></div>
+                            </div>
+
+                            <!-- Activities Tab -->
+                            <div id="activitiesContent" class="tab-content hidden">
+                                <div id="memberActivitiesList" class="space-y-4"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="memberEmptyState" class="text-center py-12">
+                        <div class="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-4xl flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-user-search text-4xl text-slate-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">ابحث عن عضو</h3>
+                        <p class="text-slate-600 dark:text-slate-400">أدخل رقم العضوية لعرض بيانات العضو</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Reviews Section -->
+            <div class="glass rounded-4xl p-6 shadow-lg animate-fadeIn">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold flex items-center space-x-2 space-x-reverse">
+                        <i class="fas fa-tasks text-accent-gold"></i>
+                        <span>المراجعات المعلقة</span>
+                    </h3>
+                    <button onclick="refreshStats()" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center space-x-2 space-x-reverse">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>تحديث</span>
+                    </button>
+                </div>
+
+                <div id="pendingReviewsList" class="space-y-4"></div>
+            </div>
+
+        </div>
+
+        <!-- Modals will be added here -->
+        <div id="modalsContainer"></div>
+
+    </div>
+<script>
+/* ==========================================================================
+   SkillUp HRM Syst – FULL FRONT-END
+   Part 2/3 – Core JS, API, Auth, Search, Render, Actions
+   ========================================================================== */
+
+/* ================== CONFIG ================== */
+const API_URL = "https://script.google.com/macros/s/AKfycbwXzRqQ22hkFbW75GHOKOMdUSdEY1r40_X-aLuR0mdWaat3FDFPzQRNd07xjMUjbDwV/exec";
+
+/* ================== GLOBAL STATE ================== */
+let auth = null;
+let currentMember = null;
+
+/* ================== UI HELPERS ================== */
+function qs(id){ return document.getElementById(id); }
+
+function show(id){ qs(id).classList.remove("hidden"); }
+function hide(id){ qs(id).classList.add("hidden"); }
+
+function showLoading(){
+  qs("loadingOverlay").classList.remove("hidden");
+  qs("loadingOverlay").classList.add("flex");
+}
+function hideLoading(){
+  qs("loadingOverlay").classList.add("hidden");
+  qs("loadingOverlay").classList.remove("flex");
+}
+
+/* ================== TOAST ================== */
+function toast(type, msg){
+  const colors = {
+    success:"bg-accent-emerald",
+    error:"bg-accent-rose",
+    warning:"bg-accent-gold"
+  };
+
+  const el = document.createElement("div");
+  el.className = `px-4 py-3 rounded-xl text-white shadow-lg animate-slideIn ${colors[type]}`;
+  el.innerHTML = msg;
+
+  qs("toastContainer").appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
+
+/* ================== API CLIENT ================== */
+async function api(payload, noAuth=false){
+  if(!API_URL) throw "API URL غير مضبوط";
+
+  if(!noAuth){
+    payload._u = auth.user;
+    payload._t = auth.token;
+    payload._s = btoa(JSON.stringify(payload)); // compatible with backend
+  }
+
+  const res = await fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  return data;
+}
+
+/* ================== AUTH ================== */
+async function handleLogin(e){
+  e.preventDefault();
+  showLoading();
+
+  try{
+    const res = await api({
+      action:"login",
+      username:qs("username").value,
+      password:qs("password").value
+    },true);
+
+    if(!res.success) throw res.msg;
+
+    auth = {
+      user: res.payload.user,
+      role: res.payload.role,
+      token: res.payload.token
+    };
+    localStorage.setItem("skillup_auth",JSON.stringify(auth));
+
+    initApp();
+    toast("success","تم تسجيل الدخول بنجاح");
+  }catch(err){
+    toast("error",err||"فشل تسجيل الدخول");
+  }finally{
+    hideLoading();
+  }
+}
+
+function logout(){
+  localStorage.removeItem("skillup_auth");
+  location.reload();
+}
+
+/* ================== INIT ================== */
+function initApp(){
+  hide("loginForm");
+  show("dashboard");
+  show("userSection");
+
+  qs("currentUser").textContent = auth.user;
+  qs("currentRole").textContent = auth.role;
+
+  refreshStats();
+}
+
+/* ================== DASHBOARD ================== */
+async function refreshStats(){
+  try{
+    const res = await api({action:"stats"});
+    if(!res.success) throw res.msg;
+
+    const stats = res.payload.stats;
+    qs("totalMembers").textContent = stats.total;
+    qs("activeMembers").textContent = stats.active;
+    qs("pendingReviews").textContent = stats.pendingReviews;
+
+    renderPending(res.payload.notifications || []);
+  }catch(err){
+    toast("error","فشل تحميل الإحصائيات");
+  }
+}
+
+/* ================== SEARCH MEMBER ================== */
+async function searchMember(){
+  const id = qs("memberSearch").value.trim();
+  if(!id) return toast("warning","أدخل رقم العضوية");
+
+  showLoading();
+  try{
+    const res = await api({action:"search", id:id});
+    if(!res.success) throw res.msg;
+
+    currentMember = res.payload;
+    renderMember(currentMember);
+  }catch(err){
+    toast("error","العضو غير موجود");
+  }finally{
+    hideLoading();
+  }
+}
+
+/* ================== RENDER MEMBER ================== */
+function renderMember(m){
+  hide("memberEmptyState");
+  show("memberDetails");
+
+  qs("memberFullName").textContent = m.name;
+  qs("memberSector").textContent = m.sector;
+  qs("memberJoinDate").textContent = "انضم: " + m.joinDate;
+
+  const status = qs("memberStatus");
+  status.textContent = m.status;
+  status.className = "px-3 py-1 rounded-full text-xs font-semibold " +
+    (m.status.includes("عضو") ? "status-approved":"status-pending");
+
+  renderLogs(m.logs || []);
+}
+
+/* ================== LOGS ================== */
+function renderLogs(logs){
+  const container = qs("memberLogsList");
+  container.innerHTML = "";
+
+  if(!logs.length){
+    container.innerHTML = `<p class="text-slate-500 text-center">لا يوجد سجلات</p>`;
+    return;
+  }
+
+  logs.forEach(l=>{
+    const div = document.createElement("div");
+    div.className = "glass rounded-2xl p-4 hover-lift";
+
+    div.innerHTML = `
+      <div class="flex justify-between items-center mb-2">
+        <strong>${l.type}</strong>
+        <span class="px-3 py-1 rounded-full text-xs ${
+          l.status==="pending" ? "status-pending":"status-approved"
+        }">${l.status}</span>
+      </div>
+      <p class="text-sm text-slate-600 dark:text-slate-400">${l.reason||""}</p>
+      ${l.avg!=="" ? `<p class="mt-2 text-sm">Score: <b>${l.avg}</b></p>`:""}
+      ${l.status==="pending" && (auth.role==="admin"||auth.role==="editor")
+        ? `<button onclick="approve('${l.logId}')" 
+            class="mt-3 px-4 py-2 bg-accent-emerald text-white rounded-xl">
+            اعتماد
+           </button>`:""}
+    `;
+    container.appendChild(div);
+  });
+}
+
+/* ================== APPROVE ================== */
+async function approve(logId){
+  if(!confirm("هل تريد اعتماد هذا العنصر؟")) return;
+
+  showLoading();
+  try{
+    const res = await api({
+      action:"approve_log",
+      uid: currentMember.uid,
+      logId: logId
+    });
+
+    if(!res.success) throw res.msg;
+
+    toast("success","تم الاعتماد");
+    searchMember();
+    refreshStats();
+  }catch(err){
+    toast("error","فشل الاعتماد");
+  }finally{
+    hideLoading();
+  }
+}
+
+/* ================== PENDING LIST ================== */
+function renderPending(list){
+  const container = qs("pendingReviewsList");
+  container.innerHTML = "";
+
+  if(!list.length){
+    container.innerHTML = `<p class="text-slate-500 text-center">لا توجد طلبات معلقة</p>`;
+    return;
+  }
+
+  list.forEach(p=>{
+    const div = document.createElement("div");
+    div.className = "glass rounded-2xl p-4 flex justify-between items-center hover-lift";
+
+    div.innerHTML = `
+      <div>
+        <strong>${p.type}</strong>
+        <p class="text-sm text-slate-600">${p.reason}</p>
+      </div>
+      <button onclick="approve('${p.logId}')"
+        class="px-4 py-2 bg-accent-emerald text-white rounded-xl">
+        اعتماد
+      </button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+/* ================== TABS ================== */
+function switchTab(tab){
+  ["logs","evaluations","activities"].forEach(t=>{
+    qs(t+"Content").classList.add("hidden");
+    qs(t+"Tab").classList.remove("border-brand-600","text-brand-600");
+  });
+  qs(tab+"Content").classList.remove("hidden");
+  qs(tab+"Tab").classList.add("border-brand-600","text-brand-600");
+}
+
+/* ================== ON LOAD ================== */
+document.addEventListener("DOMContentLoaded",()=>{
+  const saved = localStorage.getItem("skillup_auth");
+  if(saved){
+    auth = JSON.parse(saved);
+    initApp();
+  }
+});
+</script>
+
+<script>
+/* ==========================================================================
+   SkillUp HRM Syst – FULL FRONT-END
+   Part 3/3 – Modals + Submit Forms + Reports + UX Enhancements
+   ========================================================================== */
+
+/* ================== MODALS HTML INJECTION ================== */
+function buildModals() {
+  const html = `
+  <!-- Evaluation Modal -->
+  <div id="evaluationModal" class="fixed inset-0 hidden items-center justify-center modal-backdrop z-50">
+    <div class="glass rounded-4xl p-6 w-full max-w-2xl mx-4 animate-fadeIn">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold flex items-center space-x-2 space-x-reverse">
+          <i class="fas fa-star text-brand-600"></i>
+          <span>تسجيل تقييم شهري</span>
+        </h3>
+        <button onclick="closeModal('evaluationModal')" class="text-slate-400 hover:text-slate-600">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold mb-2">الشهر</label>
+          <select id="evalMonth" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+            <option>يناير</option><option>فبراير</option><option>مارس</option><option>أبريل</option>
+            <option>مايو</option><option>يونيو</option><option>يوليو</option><option>أغسطس</option>
+            <option>سبتمبر</option><option>أكتوبر</option><option>نوفمبر</option><option>ديسمبر</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">السنة</label>
+          <input id="evalYear" type="number" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="2026">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">نمط الاجتماع</label>
+          <select id="evalMeetingMode" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+            <option>Offline</option>
+            <option>Online</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">حالة الاجتماع</label>
+          <select id="evalMeetingStatus" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+            <option>حاضر</option>
+            <option>غائب</option>
+            <option>متأخر</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">دقائق التأخير</label>
+          <input id="evalDelay" type="number" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="0">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">Attendance Score</label>
+          <input id="evalAttendance" type="number" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="0 - 100">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">Activity Score</label>
+          <input id="evalActivity" type="number" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="0 - 100">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">Task Score</label>
+          <input id="evalTask" type="number" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="0 - 100">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">Bonus</label>
+          <input id="evalBonus" type="number" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="0">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">Penalty</label>
+          <input id="evalPenalty" type="number" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="0">
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-semibold mb-2">Final Score</label>
+          <input id="evalFinal" type="number" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="0 - 100">
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-semibold mb-2">ملاحظات</label>
+          <textarea id="evalNotes" rows="3" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="اختياري..."></textarea>
+        </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-3 mt-6">
+        <button onclick="submitEvaluation()" class="w-full md:w-auto px-6 py-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 transition-colors flex items-center justify-center space-x-2 space-x-reverse">
+          <i class="fas fa-paper-plane"></i><span>إرسال للاعتماد</span>
+        </button>
+        <button onclick="closeModal('evaluationModal')" class="w-full md:w-auto px-6 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+          إلغاء
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-4">
+        سيتم حفظ التقييم في <b>MonthlyEvaluations</b> بحالة <b>pending</b>.
+      </p>
+    </div>
   </div>
 
-  <!-- DASHBOARD -->
-  <div id="dash" class="hidden">
-    <p class="mb-2">مرحبًا <b id="who"></b></p>
+  <!-- Activity Modal -->
+  <div id="activityModal" class="fixed inset-0 hidden items-center justify-center modal-backdrop z-50">
+    <div class="glass rounded-4xl p-6 w-full max-w-xl mx-4 animate-fadeIn">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold flex items-center space-x-2 space-x-reverse">
+          <i class="fas fa-trophy text-accent-emerald"></i>
+          <span>نشاط / بونص / عقوبة</span>
+        </h3>
+        <button onclick="closeModal('activityModal')" class="text-slate-400 hover:text-slate-600">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
 
-    <input id="searchId" placeholder="Member ID" class="border p-2 w-full mb-2">
-    <button onclick="search()" class="bg-green-600 text-white w-full py-2 rounded mb-4">Search</button>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold mb-2">النوع</label>
+          <select id="actType" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+            <option value="نشاط">نشاط</option>
+            <option value="بونص">بونص</option>
+            <option value="عقوبة">عقوبة</option>
+          </select>
+        </div>
 
-    <div id="result"></div>
+        <div>
+          <label class="block text-sm font-semibold mb-2">التاريخ</label>
+          <input id="actDate" type="date" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">النقاط</label>
+          <input id="actScore" type="number" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="مثال: 3 أو -2">
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">يفضل: البونص موجب، العقوبة سالب.</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-2">الوصف</label>
+          <textarea id="actDesc" rows="3" class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl" placeholder="سبب مختصر..."></textarea>
+        </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-3 mt-6">
+        <button onclick="submitActivity()" class="w-full md:w-auto px-6 py-3 bg-accent-emerald text-white rounded-xl hover:bg-accent-emerald/90 transition-colors flex items-center justify-center space-x-2 space-x-reverse">
+          <i class="fas fa-paper-plane"></i><span>إرسال للاعتماد</span>
+        </button>
+        <button onclick="closeModal('activityModal')" class="w-full md:w-auto px-6 py-3 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+          إلغاء
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-4">
+        سيتم حفظ العملية في <b>MemberActivities</b> بحالة <b>pending</b>.
+      </p>
+    </div>
   </div>
-</div>
+  `;
+  qs("modalsContainer").innerHTML = html;
+}
 
-<script src="app.js"></script>
+/* ================== MODAL CONTROLS ================== */
+function openModal(id){
+  const m = document.getElementById(id);
+  if(!m) return;
+  m.classList.remove("hidden");
+  m.classList.add("flex");
+}
+function closeModal(id){
+  const m = document.getElementById(id);
+  if(!m) return;
+  m.classList.add("hidden");
+  m.classList.remove("flex");
+}
+
+/* ================== SHOW MODALS ================== */
+function showEvaluationModal(){
+  if(!currentMember) return toast("warning","ابحث عن عضو أولاً");
+  // defaults
+  document.getElementById("evalYear").value = new Date().getFullYear();
+  document.getElementById("evalDelay").value = 0;
+  document.getElementById("evalAttendance").value = "";
+  document.getElementById("evalActivity").value = "";
+  document.getElementById("evalTask").value = "";
+  document.getElementById("evalBonus").value = 0;
+  document.getElementById("evalPenalty").value = 0;
+  document.getElementById("evalFinal").value = "";
+  document.getElementById("evalNotes").value = "";
+  openModal("evaluationModal");
+}
+
+function showActivityModal(){
+  if(!currentMember) return toast("warning","ابحث عن عضو أولاً");
+  const d = new Date().toISOString().slice(0,10);
+  document.getElementById("actDate").value = d;
+  document.getElementById("actScore").value = "";
+  document.getElementById("actDesc").value = "";
+  document.getElementById("actType").value = "نشاط";
+  openModal("activityModal");
+}
+
+/* ================== SUBMIT EVALUATION (MonthlyEvaluations) ================== */
+async function submitEvaluation(){
+  if(!currentMember) return;
+
+  const Month = document.getElementById("evalMonth").value;
+  const Year = String(document.getElementById("evalYear").value || "").trim();
+  if(!Year) return toast("warning","اكتب السنة");
+
+  const payload = {
+    action:"add_month_eval",
+    MemberUID: currentMember.uid,
+    Month,
+    Year,
+    MeetingMode: document.getElementById("evalMeetingMode").value,
+    MeetingStatus: document.getElementById("evalMeetingStatus").value,
+    DelayMinutes: Number(document.getElementById("evalDelay").value || 0),
+    AttendanceScore: Number(document.getElementById("evalAttendance").value || 0),
+    ActivityScore: Number(document.getElementById("evalActivity").value || 0),
+    TaskScore: Number(document.getElementById("evalTask").value || 0),
+    Bonus: Number(document.getElementById("evalBonus").value || 0),
+    Penalty: Number(document.getElementById("evalPenalty").value || 0),
+    FinalScore: Number(document.getElementById("evalFinal").value || 0),
+    Notes: document.getElementById("evalNotes").value.trim()
+  };
+
+  showLoading();
+  try{
+    const res = await api(payload);
+    if(!res.success) throw res.msg || "تعذر حفظ التقييم";
+    toast("success","تم إرسال التقييم للاعتماد ✅");
+    closeModal("evaluationModal");
+    await refreshStats();
+    await searchMember(); // reload member logs
+  }catch(e){
+    toast("error", e || "فشل حفظ التقييم");
+  }finally{
+    hideLoading();
+  }
+}
+
+/* ================== SUBMIT ACTIVITY (MemberActivities) ================== */
+async function submitActivity(){
+  if(!currentMember) return;
+
+  const Type = document.getElementById("actType").value;
+  const Date = document.getElementById("actDate").value;
+  const Description = document.getElementById("actDesc").value.trim();
+  const Score = Number(document.getElementById("actScore").value || 0);
+
+  if(!Description) return toast("warning","اكتب وصف/سبب العملية");
+
+  showLoading();
+  try{
+    const res = await api({
+      action:"add_activity",
+      MemberUID: currentMember.uid,
+      Type,
+      Date,
+      Description,
+      Score,
+      Status:"pending"
+    });
+
+    if(!res.success) throw res.msg || "تعذر حفظ العملية";
+    toast("success","تم إرسال العملية للاعتماد ✅");
+    closeModal("activityModal");
+    await refreshStats();
+    await searchMember();
+  }catch(e){
+    toast("error", e || "فشل حفظ العملية");
+  }finally{
+    hideLoading();
+  }
+}
+
+/* ================== PDF REPORT ================== */
+function generateReport(){
+  if(!currentMember) return toast("warning","ابحث عن عضو أولاً");
+
+  // Create a report container
+  const wrap = document.createElement("div");
+  wrap.style.padding = "20px";
+  wrap.style.fontFamily = "Cairo, sans-serif";
+  wrap.innerHTML = `
+    <h2 style="margin:0 0 6px;">SkillUp HRM System - تقرير عضو</h2>
+    <div style="color:#334155;margin-bottom:10px;">تاريخ التقرير: ${new Date().toLocaleString()}</div>
+    <hr/>
+    <h3 style="margin:14px 0 6px;">بيانات العضو</h3>
+    <p><b>الاسم:</b> ${escapeHtml(currentMember.name||"")}</p>
+    <p><b>القطاع:</b> ${escapeHtml(currentMember.sector||"")}</p>
+    <p><b>الحالة:</b> ${escapeHtml(currentMember.status||"")}</p>
+    <p><b>تاريخ الانضمام:</b> ${escapeHtml(currentMember.joinDate||"")}</p>
+    <p><b>UID:</b> ${escapeHtml(currentMember.uid||"")}</p>
+    <hr/>
+    <h3 style="margin:14px 0 6px;">السجل</h3>
+    <ol>
+      ${(currentMember.logs||[]).map(l => `
+        <li style="margin:8px 0;">
+          <b>${escapeHtml(l.type||"")}</b> — ${escapeHtml(l.reason||"")}
+          ${l.avg!=="" ? ` — <b>Score:</b> ${escapeHtml(l.avg)}`:""}
+          — <b>Status:</b> ${escapeHtml(l.status||"")}
+        </li>
+      `).join("")}
+    </ol>
+  `;
+
+  const opt = {
+    margin: 10,
+    filename: `SkillUp_Report_${(currentMember.MemberID||"member")}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(wrap).save();
+}
+
+/* ================== THEME TOGGLE ================== */
+function toggleTheme(){
+  document.documentElement.classList.toggle("dark");
+}
+
+/* ================== WIRE UI BUTTONS (from Part 1 layout) ================== */
+function wireButtons(){
+  // (Buttons in header already wired via onclick in markup)
+  // Here we wire any missing event listeners.
+  // The "Search" is onclick in markup, but safe to keep.
+}
+
+/* ================== BOOTSTRAP ================== */
+document.addEventListener("DOMContentLoaded", ()=>{
+  buildModals();
+  wireButtons();
+
+  // Hook search Enter key
+  const searchBox = document.getElementById("memberSearch");
+  if(searchBox){
+    searchBox.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter") searchMember();
+    });
+  }
+
+  // Update default month in eval modal
+  const monthSel = document.getElementById("evalMonth");
+  if(monthSel){
+    monthSel.selectedIndex = new Date().getMonth();
+  }
+});
+</script>
+
 </body>
 </html>
