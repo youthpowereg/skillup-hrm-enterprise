@@ -1,1 +1,34 @@
-index.html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>SkillUp HRM Enterprise</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-100 font-sans">
+
+<div class="max-w-xl mx-auto mt-20 bg-white p-6 rounded-xl shadow">
+  <h1 class="text-2xl font-bold mb-4 text-center">SkillUp HRM</h1>
+
+  <!-- LOGIN -->
+  <div id="loginBox">
+    <input id="user" placeholder="Username" class="border p-2 w-full mb-2">
+    <input id="pass" type="password" placeholder="Password" class="border p-2 w-full mb-4">
+    <button onclick="login()" class="bg-blue-600 text-white w-full py-2 rounded">Login</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash" class="hidden">
+    <p class="mb-2">مرحبًا <b id="who"></b></p>
+
+    <input id="searchId" placeholder="Member ID" class="border p-2 w-full mb-2">
+    <button onclick="search()" class="bg-green-600 text-white w-full py-2 rounded mb-4">Search</button>
+
+    <div id="result"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
