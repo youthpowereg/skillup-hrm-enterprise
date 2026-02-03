@@ -1,4 +1,4 @@
-const API = "https://script.google.com/macros/s/AKfycbx5XNBhr9W0b6P6vqI_CnqtYq-hbNpR3F3dxaIX4_JgWlSBBHQKa0Y7xKySkfzAojJjtw/exec";
+const API = "https://script.google.com/macros/s/AKfycbwXzRqQ22hkFbW75GHOKOMdUSdEY1r40_X-aLuR0mdWaat3FDFPzQRNd07xjMUjbDwV/exec";
 let auth = null;
 
 function api(payload){
